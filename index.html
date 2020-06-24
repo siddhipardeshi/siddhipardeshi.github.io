@@ -1,0 +1,298 @@
+<html>
+<head>
+</head>
+<body>
+
+	<!--Creating Play Area
+	1.Snake Arena canvas
+	2.Plot Cells on Canvas
+	3.Detect Users Key Press
+	4.Play Audio for every snake move and food consumption
+	5.Snake Body
+	6.On consuming food snake length must increase
+	-->
+
+	<!--1 Snake Arena canvas -->
+
+	<canvas style="margin-top:30px;
+	display: block ;
+	padding-left: 0; 
+	padding-right: 0; 
+	margin-left: auto;
+	margin-right: auto;" 
+	id="myCanvas" width="520" height="520">	
+	</canvas>	
+
+	<br>
+
+
+	<marquee><i>Let's play the Snake game! &#x1F525; Made by Siddhi Pardeshi</i></marquee>
+	
+	
+	<script>
+	
+		//****1 Get Plane Canvas
+		var canvas = document.getElementById("myCanvas");
+		var ctx = canvas.getContext("2d");
+		ctx.fillStyle = "#25f6fd" ;			//canvas color 	
+		ctx.fillRect(0, 0, 520, 520);		//canvas rect
+
+
+		//************3 Detect Users Key Press
+
+		var state = 0;	// 0-right, 1-down, 2- left, 3-up;
+
+		function handleKey(e)
+		{
+		    e = e || window.event;  //to detect key press
+
+		    var play = false;
+
+		    if (e.keyCode == '38'&& state!=1 && state!=3) 	//if snake not moving 1-down 3-up;
+			{ 
+		        state = 3;		// up arrow
+		        play = true;
+
+		    }
+		    else if (e.keyCode == '40'&&state!=1&&state!=3) 
+			{
+		        // down arrow
+		        state = 1;
+		        play = true;
+		    }
+		    else if (e.keyCode == '37'&&state!=0&&state!=2) {
+		       // left arrow
+		        state = 2;
+		        play = true;
+		    }
+		    else if (e.keyCode == '39'&&state!=0&&state!=2) {
+		       // right arrow
+		        state = 0;
+		        play = true;
+		    }
+
+		    if(play)
+		    playAudio();
+		   
+		}
+
+		document.onkeydown = handleKey; //call to func
+
+		//4 Play Audio for every snake move and food consumption
+
+		function playAudio()
+		{
+			var audio = new Audio('https://www.soundjay.com/switch/switch-1.wav');
+            audio.play();			
+		}
+
+		function playConsume()
+		{			
+			var audio = new Audio('https://www.soundjay.com/button/button-3.wav');
+            audio.play();			
+		}
+
+		//************2---Draw Cells on Canvas
+
+		//Divide Canvas into 20 rows n columns
+		var N = 20;					
+		var size = 520;
+		var cellSize = size/N; 		//1 cell size
+
+		var matrix = new Array(N);
+
+		//plot cells
+		for (var i = 0; i < matrix.length; i++) 
+		{
+		  matrix[i] = new Array(N);
+		}
+		
+
+		function drawCell(i,j)
+		{
+			if( (i+j)%2==0 )  			//even cells
+			{
+				ctx.fillStyle = ("#e9ccfc"); //cell colour black
+			}
+			else								//odd cells
+			{
+			ctx.fillStyle = "#e984fc"; //cell colour
+			}
+						//x,y,width,height
+			ctx.fillRect(cellSize*i, cellSize*j, cellSize, cellSize);
+		}
+
+		for (var i = 0; i < matrix.length; i++)
+		{
+			for (var j = 0; j < matrix[i].length; j++)
+			{
+				matrix[i][j]=0;
+				drawCell(i,j);
+			}
+		}
+
+		//********Initial snake body of 3 cells
+
+		var body = [];
+
+		body.push([1+ N/2,N/2]); 
+		body.push([N/2,N/2]);
+		body.push([-1+N/2,N/2]);
+
+		//************Collection of eyes open n close
+
+		var eyeImage = new Image();
+		eyeImage.src = "https://i.imgur.com/6jLbz7l.png";
+		
+		var foodImage = new Image();
+		foodImage.src = "https://i.imgur.com/88saChB.png";
+
+		var counter = 0;
+		var foodX = 0;
+		var foodY = 0;
+
+		//**********Food Generation
+
+		function generateFood()
+		{
+			
+			var success = false;
+
+			while(!success)
+			{
+				foodX = parseInt(Math.random()*N);
+				foodY = parseInt(Math.random()*N);
+
+				success = true;
+
+				for(var i=0;i<body.length;i++)
+				{
+					if(body[i][0]==foodX && body[i][1]==foodY)	//if food collides with snake body reject
+					{
+						success = false;
+					}
+				}
+			}
+		}
+
+		generateFood();
+
+		//************************Update Food and snake
+
+		function update()
+		{
+			
+			counter++;
+
+			var increase = false;
+
+			if(body[0][0]==foodX && body[0][1]==foodY)
+			{
+				generateFood();
+				playConsume();
+				increase = true;
+			}
+
+			//Draw Arena
+
+			for (var i = 0; i < matrix.length; i++)
+			{
+				for (var j = 0; j < matrix[i].length; j++)
+				{
+					drawCell(i,j);
+				}
+			}
+			
+
+			ctx.drawImage(foodImage,foodX*cellSize, foodY*cellSize,cellSize, cellSize);
+
+
+			//Draw body of snake
+
+			for(var i=0;i<body.length;i++)
+			{
+				ctx.fillStyle = ("#0622fc");
+
+				ctx.fillRect(cellSize*body[i][0], 
+				cellSize*body[i][1], cellSize, cellSize);
+
+				//Draw Eyes and blink
+
+				if(i==0) //0th body part
+				{
+					var marginX = cellSize/3;	//gap between eyes in cell
+					var marginY = cellSize/3;
+					
+
+					//snake moving right or left eyes will be 	*
+												//	            *
+					if(state==0||state==2)
+					{
+						marginX=0;
+					}
+					else if (state==1||state==3)
+					{
+						marginY=0; //up and down eyes will be ** 
+					}
+
+					//image,select 1 part of eye from 9 width of eye is 28
+
+					//First Eye
+ 					ctx.drawImage(eyeImage,
+ 						0,28*(counter%9),
+ 						cellSize,cellSize,
+ 						cellSize*body[i][0]+marginX, 
+						cellSize*body[i][1]+marginY,
+						cellSize, cellSize);
+
+
+					//Second Eye
+					ctx.drawImage(eyeImage,
+						0,28*(counter%9),
+						cellSize,cellSize,
+						cellSize*body[i][0]-marginX, 
+						cellSize*body[i][1]-marginY, 
+						cellSize, cellSize);
+
+				} //if
+
+			}	//for
+
+		    // 0->right, 1->down, 2- left, 3 is up;
+
+		    var x = 0;
+		    var y = 0;
+
+		    if(state==0){
+		    	x++;
+		    }
+		    else if(state==1){
+		    	y++;
+		    }
+		    else if(state==2){
+		    	x--;
+		    }
+		    else if(state==3){
+		    	y--;
+		    }
+
+		    var first = body[0]; 				//prev head
+		    var arr = [ first[0]+x , first[1]+y ]; //new head
+
+		    body.splice(0,0, arr);	//inserts 1 cell body part
+
+		    if(!increase)
+			{
+				body.pop();		//delete last body cell of food not consumed
+			}
+		    
+
+		} //function update
+
+		setInterval(update,300);	//To make it animated update in every 300ms
+
+	</script>
+
+</body>
+
+</html>
